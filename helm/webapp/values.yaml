@@ -1,0 +1,77 @@
+replicaCount: 1
+
+image:
+  repository: <aws-account-id>.dkr.ecr.us-east-1.amazonaws.com/rak-repo
+  pullPolicy: Always
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+  containerPort: 8080
+
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/load-balancer-name: rak-alb
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/scheme: internet-facing
+
+  hosts:
+    - host: http
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: javaapp
+              port:
+                number: 80
+  tls: []
+
+resources:
+  limits:
+    cpu: 400m
+    memory: 500Mi
+  requests:
+    cpu: 200m
+    memory: 250Mi
+livenessProbe:
+  httpGet:
+    path: /
+    port: 8080
+  periodSeconds: 60
+readinessProbe:
+  httpGet:
+    path: /
+    port: 8080
+  periodSeconds: 60
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilizationPercentage: 80
+volumes: []
+
+volumeMounts: []
+nodeSelector: {}
+tolerations: []
+affinity: {}
