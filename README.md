@@ -76,3 +76,4 @@ Add the following variables in the GitHub repository.
 <HELM_CHART> with the name of helm chart
 <ECR_REPOSITORY> with the name of ECR repository
 
+
