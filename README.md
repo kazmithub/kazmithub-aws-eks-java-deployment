@@ -77,3 +77,4 @@ Add the following variables in the GitHub repository.
 <ECR_REPOSITORY> with the name of ECR repository
 
 
+
