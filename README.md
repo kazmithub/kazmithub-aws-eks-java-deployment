@@ -1,94 +1,97 @@
-# Introduction:
-This page serves as a documentation hub for understanding and using the Terraform infrastructure-as-code (IAC) configurations in this repository. Whether you're a newcomer or an experienced user, this guide will help you get started with deploying and managing infrastructure using Terraform.
+# AWS EKS Java Deployment
 
-**Author:** Ahsan Kazmi
+Production-grade Kubernetes deployment on AWS EKS with Terraform, Helm, and GitHub Actions CI/CD.
 
-Table of Contents:
+## Architecture
 
-1. [Getting Started](#getting-started)
-2. [Project Structure](#project-structure)
-3. [Modules](#modules)
-4. [Variables](#variables)
-5. [Configuration](#configuration)
-6. [Usage](#usage)
-
-
-# Getting Started:
-Before you begin, make sure you have Terraform installed on your local machine. You can download it from [Terraform's official website](https://www.terraform.io/downloads.html). Additionally, clone this repository to your local environment.
-
-# Project Structure:
-The Terraform code in this repository follows a structured layout to promote maintainability and reusability. The main directories include:
-
-- `main.tf` The main configuration file where resources are defined.  
-- `variables.tf` Declare variables used in your configuration.  
-- `outputs.tf` Declare outputs used in your configuration.  
-- `modules/` Store reusable modules that encapsulate specific functionality.  
-- `environments/` Organise configurations for different environments (e.g., development, production).  
-
-# Modules:
-We encourage modularisation to enhance code organisation and reusability. Currently, we are using public modules for the following resources in the cloud. 
-
-- `VPC` Establishes Virtual Private Cloud (VPC) networks to isolate and manage resources.
-- `EKS` Creates the relevant Elastic Kubernetes Service (EKS) resources. 
-- `ECR` Create Elastic Container Repository (ECR) repository in AWS. 
-- `IAM` Creates relevant IAM resources for Kubernetes and GitHub Actions. 
-
-
-# Variables:
-Customize your deployments using variables defined in variables.tf. Adjust these variables based on your requirements and environment.
-terraform.tfvars: The values for the variables are defined centrally for each environment in terraform.tfvars file.
-
-# Configuration:
-Your Terraform configuration defines the desired state of your infrastructure. Review and modify main.tf to specify the resources you want to create, update, or delete.
-
-# Usage:
-
-## Terraform
-To apply the Terraform configuration, follow these steps:
-
-> Clone the repository.
 ```
-cd $(pwd)/rak-ahsan-solution/terraform
+GitHub Actions CI/CD
+        |
+        v
+   Docker Build --> ECR Registry
+        |
+        v
+   Terraform Apply
+        |
+        +---> VPC (Public + Private Subnets, NAT Gateway)
+        +---> EKS Cluster (Managed Node Groups / Karpenter)
+        +---> IAM Roles (OIDC-based IRSA)
+        +---> Helm Release --> Kubernetes Deployment
+                                    |
+                                    +---> HPA (Auto-scaling)
+                                    +---> Network Policies
+                                    +---> Service + Ingress
 ```
-> Replace the following names throughout the repository
-<aws-account-id> with your account ID. 
-<aws-region> with the region you want to deploy the app in. 
-<aws-kms-key-id> with the KMS key to encrypt the EBS volume of the nodes.  
 
-> Initialise the Terraform code
+## Key Features
+
+- **Infrastructure as Code** - Full AWS infrastructure managed with Terraform modules
+- **EKS with OIDC** - Secure IAM role binding using IRSA (IAM Roles for Service Accounts)
+- **Helm-based Deployments** - Application packaged and deployed via Helm charts
+- **CI/CD Pipeline** - GitHub Actions for automated build, test, and deploy
+- **Auto-scaling** - Horizontal Pod Autoscaler (HPA) for application pods
+- **Network Security** - Kubernetes Network Policies for pod-to-pod communication
+- **Karpenter Ready** - Alternative node provisioning for cost optimization
+- **Monitoring** - Prometheus + Grafana stack configuration included
+
+## Prerequisites
+
+- AWS CLI v2 configured with appropriate credentials
+- Terraform >= 1.5.0
+- kubectl >= 1.28
+- Helm >= 3.12
+- Docker for building application images
+
+## Project Structure
+
 ```
+.
+├── main.tf                  # EKS cluster, VPC, IAM configuration
+├── variables.tf             # Input variables
+├── outputs.tf               # Output values
+├── providers.tf             # Provider configuration
+├── karpenter.tf             # Karpenter node provisioner (optional)
+├── monitoring.tf            # Prometheus + Grafana stack (optional)
+├── backend.tf               # S3 remote state configuration
+├── helm/                    # Helm chart for Java application
+├── k8s/                     # Kubernetes manifests (HPA, NetworkPolicy)
+├── .github/workflows/       # CI/CD pipeline
+└── app/                     # Java application source
+```
+
+## Deployment
+
+```bash
+# 1. Initialize Terraform
 terraform init
-```
-> Plan the changes to apply to the infrastructure and review these changes.
-```
+
+# 2. Review the execution plan
 terraform plan
-```
-> Apply the changes to the infrastructure.
-```
+
+# 3. Apply infrastructure
 terraform apply
+
+# 4. Configure kubectl
+aws eks update-kubeconfig --name <cluster-name> --region <region>
+
+# 5. Verify deployment
+kubectl get pods -A
+kubectl get svc
 ```
 
-## GitHub Actions
-Add the following variables in the GitHub repository. 
-<ASSUME_ROLE_ARN> with the deployed role in the module
-<AWS_REGION> with the AWS region
-<CLUSTER_NAME> with the EKS cluster name
-<HELM_CHART> with the name of helm chart
-<ECR_REPOSITORY> with the name of ECR repository
+## Cleanup
 
+```bash
+terraform destroy
+```
 
+## Modules Used
 
+| Module | Version | Purpose |
+|--------|---------|---------|
+| terraform-aws-modules/vpc/aws | 5.7.1 | VPC with public/private subnets |
+| terraform-aws-modules/eks/aws | ~> 20.0 | EKS cluster and managed node groups |
 
+## License
 
-
-
-
-
-
-
-
-
-
-
-
-
+MIT
